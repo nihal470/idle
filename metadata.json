@@ -1,0 +1,6 @@
+{
+  "name": "Idle Fleet",
+  "description": "Real-time car rental idle list, fleet inventory status management (Available, On Rent, Maintenance), booking tracker, and customer reservation dashboard powered by Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

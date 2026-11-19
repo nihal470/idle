@@ -1,0 +1,84 @@
+<resources>
+    <string name="app_name">Idle Fleet</string>
+
+    <!-- Navigation -->
+    <string name="nav_idle_list">Idle List</string>
+    <string name="nav_customer">Reserve</string>
+    <string name="nav_bookings">Bookings</string>
+
+    <!-- Status Labels -->
+    <string name="status_all">All Fleet</string>
+    <string name="status_available">Available</string>
+    <string name="status_on_rent">On Rent</string>
+    <string name="status_maintenance">Maintenance</string>
+
+    <!-- Booking Status Labels -->
+    <string name="booking_status_pending">Pending</string>
+    <string name="booking_status_active">Active Rental</string>
+    <string name="booking_status_completed">Completed</string>
+    <string name="booking_status_cancelled">Cancelled</string>
+
+    <!-- Top Bar & Connection -->
+    <string name="connection_live">Live · idle</string>
+    <string name="connection_polling">Synced · idle</string>
+    <string name="connection_connecting">Syncing…</string>
+    <string name="connection_key_needed">Key Needed</string>
+    <string name="connection_schema_needed">SQL Setup</string>
+    <string name="connection_error">Offline</string>
+    <string name="cd_refresh_fleet">Refresh fleet data from Supabase</string>
+    <string name="cd_connection_status">Inspect Supabase connection and schema setup</string>
+    <string name="cd_add_vehicle">Add new vehicle to fleet</string>
+
+    <!-- Idle List Screen -->
+    <string name="idle_list_title">Fleet Idle List</string>
+    <string name="idle_list_subtitle">Real-time vehicle availability &amp; dispatch</string>
+    <string name="search_vehicles_hint">Search make, model, plate…</string>
+    <string name="cd_clear_search">Clear search query</string>
+    <string name="empty_fleet_title">No vehicles in your Supabase fleet</string>
+    <string name="empty_fleet_body">Add your first rental vehicle below or seed a starter fleet directly into your Supabase database.</string>
+    <string name="action_add_vehicle">Add Vehicle</string>
+    <string name="action_seed_fleet">Seed 6 Vehicles to Supabase</string>
+    <string name="empty_filter_title">No vehicles match this filter</string>
+    <string name="empty_filter_body">Try clearing your search or switching to another status tab.</string>
+
+    <!-- Customer Dashboard Screen -->
+    <string name="customer_hero_eyebrow">INSTANT RESERVATIONS</string>
+    <string name="customer_hero_title">Drive Ready.\nZero Wait.</string>
+    <string name="customer_trip_length">Trip Duration</string>
+    <string name="customer_show_all_toggle">Show Busy</string>
+    <string name="action_reserve_now">Reserve Now</string>
+    <string name="label_currently_unavailable">Currently Unavailable</string>
+    <string name="empty_available_title">All vehicles are currently booked or in service</string>
+    <string name="empty_available_body">Check back shortly or toggle Show Busy to browse the full fleet lineup.</string>
+
+    <!-- Bookings Screen -->
+    <string name="bookings_title">Booking Tracker</string>
+    <string name="bookings_subtitle">Live reservations, pickups &amp; returns</string>
+    <string name="empty_bookings_title">No bookings recorded yet</string>
+    <string name="empty_bookings_body">Customer reservations made from the Reserve tab will appear here in real time.</string>
+    <string name="action_confirm_pickup">Confirm Pickup</string>
+    <string name="action_complete_return">Check-In Return</string>
+    <string name="action_cancel_booking">Cancel</string>
+    <string name="return_dialog_title">Vehicle Return Check-In</string>
+    <string name="return_dialog_body">Complete this reservation and choose the vehicle\'s next status in the Idle List.</string>
+    <string name="return_to_available">Return to Available (Idle)</string>
+    <string name="return_to_maintenance">Send to Maintenance Bay</string>
+
+    <!-- Forms & Sheets -->
+    <string name="sheet_add_vehicle_title">Add Fleet Vehicle</string>
+    <string name="sheet_edit_vehicle_title">Update Vehicle</string>
+    <string name="sheet_reserve_title">Quick Reservation</string>
+    <string name="sheet_supabase_title">Supabase Connection</string>
+    <string name="action_save">Save to Supabase</string>
+    <string name="action_confirm_reservation">Confirm Reservation</string>
+    <string name="action_copy_sql">Copy SQL Schema</string>
+    <string name="action_delete_vehicle">Remove Vehicle</string>
+    <string name="action_retry_sync">Sync Now</string>
+
+    <!-- Banner Guidance -->
+    <string name="banner_missing_key_title">Add Supabase Key in AI Studio Secrets</string>
+    <string name="banner_missing_key_body">Add SUPABASE_PUBLISHABLE_KEY in the AI Studio Secrets panel to connect live to project \"idle\" (wxqsjmilzpxaiptkahmq).</string>
+    <string name="banner_schema_missing_title">Initialize Supabase Tables</string>
+    <string name="banner_schema_missing_body">Connected to project \"idle\", but the \"vehicles\" or \"bookings\" table was not found. Copy and run the SQL schema in your Supabase SQL Editor.</string>
+    <string name="sql_copied_toast">SQL schema copied to clipboard</string>
+</resources>
