@@ -322,7 +322,7 @@ class FleetViewModel(
         }
         viewModelScope.launch {
             _uiState.update { it.copy(isSubmitting = true) }
-            when (val result = repository.returnVehicle(vehicle.id, returnDate, reason, remarks))
+            when (val result = repository.returnVehicle(vehicle.id, returnDate, reason, remarks)) {
                 is RepoResult.Success -> {
                     _uiState.update { state ->
                         state.copy(
