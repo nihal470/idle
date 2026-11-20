@@ -184,6 +184,7 @@ class FleetRepository(
         immediatePickup: Boolean,
     ): RepoResult<Booking> {
         if (!SupabaseConfig.isApiKeyConfigured) return RepoResult.MissingApiKey
+        if (vehicle.isReturned) return RepoResult.Error("This vehicle has been returned and cannot be reserved.")
         return try {
             val codeNum = (1000..9999).random()
             val bookingStatus = if (immediatePickup) BookingStatus.ACTIVE else BookingStatus.PENDING
