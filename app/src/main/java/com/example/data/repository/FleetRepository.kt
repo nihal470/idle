@@ -6,6 +6,7 @@ import com.example.data.model.CreateBookingRequest
 import com.example.data.model.CreateVehicleRequest
 import com.example.data.model.UpdateBookingStatusRequest
 import com.example.data.model.UpdateVehicleStatusRequest
+import com.example.data.model.UpdateVehicleLifecycleRequest
 import com.example.data.model.Vehicle
 import com.example.data.model.VehicleStatus
 import com.example.data.remote.SupabaseApi
@@ -112,6 +113,51 @@ class FleetRepository(
             RepoResult.Success(updated)
         } catch (e: Exception) {
             RepoResult.Error(e.localizedMessage ?: "Failed to update vehicle status")
+        }
+    }
+
+    suspend fun returnVehicle(
+        id: String,
+        returnDate: String,
+        reason: String,
+        remarks: String?,
+    ): RepoResult<Vehicle> {
+        if (!SupabaseConfig.isApiKeyConfigured) return RepoResult.MissingApiKey
+        return try {
+            val payload = UpdateVehicleLifecycleRequest(
+                fleetStatus = "RETURNED",
+                fleetReturnDate = returnDate,
+                fleetReturnReason = reason,
+                fleetReturnRemarks = remarks?.trim()?.takeIf { it.isNotBlank() },
+                status = VehicleStatus.AVAILABLE.wireValue,
+                currentRenter = null,
+                returnDue = null,
+                updatedAt = isoNowUtc(),
+            )
+            val response = api.updateVehicleLifecycle(idFilter = "eq.$id", request = payload)
+            classifyError(response)?.let { return it }
+            val updated = response.body()?.firstOrNull()?.toDomain()
+                ?: return RepoResult.Error("Vehicle return update returned an empty response.")
+            RepoResult.Success(updated)
+        } catch (e: Exception) {
+            RepoResult.Error(e.localizedMessage ?: "Failed to return vehicle")
+        }
+    }
+
+    suspend fun reactivateVehicle(id: String): RepoResult<Vehicle> {
+        if (!SupabaseConfig.isApiKeyConfigured) return RepoResult.MissingApiKey
+        return try {
+            val payload = UpdateVehicleLifecycleRequest(
+                fleetStatus = "ACTIVE",
+                updatedAt = isoNowUtc(),
+            )
+            val response = api.updateVehicleLifecycle(idFilter = "eq.$id", request = payload)
+            classifyError(response)?.let { return it }
+            val updated = response.body()?.firstOrNull()?.toDomain()
+                ?: return RepoResult.Error("Vehicle reactivation returned an empty response.")
+            RepoResult.Success(updated)
+        } catch (e: Exception) {
+            RepoResult.Error(e.localizedMessage ?: "Failed to reactivate vehicle")
         }
     }
 
