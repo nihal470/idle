@@ -49,16 +49,18 @@ data class FleetUiState(
     val selectedBookingFilter: BookingStatus? = null,
     val snackbarMessage: String? = null,
 ) {
-    val availableCount: Int get() = vehicles.count { it.status == VehicleStatus.AVAILABLE }
-    val onRentCount: Int get() = vehicles.count { it.status == VehicleStatus.ON_RENT }
-    val maintenanceCount: Int get() = vehicles.count { it.status == VehicleStatus.MAINTENANCE }
+    val activeFleetVehicles: List<Vehicle> get() = vehicles.filterNot { it.isReturned }
+    val returnedVehicles: List<Vehicle> get() = vehicles.filter { it.isReturned }.sortedByDescending { it.fleetReturnDate.orEmpty() }
+    val availableCount: Int get() = activeFleetVehicles.count { it.status == VehicleStatus.AVAILABLE }
+    val onRentCount: Int get() = activeFleetVehicles.count { it.status == VehicleStatus.ON_RENT }
+    val maintenanceCount: Int get() = activeFleetVehicles.count { it.status == VehicleStatus.MAINTENANCE }
 
     val activeBookingsCount: Int get() = bookings.count { it.status == BookingStatus.ACTIVE }
     val pendingBookingsCount: Int get() = bookings.count { it.status == BookingStatus.PENDING }
     val completedBookingsCount: Int get() = bookings.count { it.status == BookingStatus.COMPLETED }
 
     val filteredFleetVehicles: List<Vehicle>
-        get() = vehicles.filter { vehicle ->
+        get() = activeFleetVehicles.filter { vehicle ->
             val matchesStatus = selectedStatusFilter == null || vehicle.status == selectedStatusFilter
             val q = searchQuery.trim()
             val matchesQuery = q.isEmpty() ||
@@ -79,7 +81,7 @@ data class FleetUiState(
         )
 
     val customerVehicles: List<Vehicle>
-        get() = vehicles.filter { vehicle ->
+        get() = activeFleetVehicles.filter { vehicle ->
             val matchesAvailability = customerShowBusyVehicles || vehicle.status == VehicleStatus.AVAILABLE
             val matchesCategory = selectedCategoryFilter == null || vehicle.category == selectedCategoryFilter
             matchesAvailability && matchesCategory
@@ -298,6 +300,49 @@ class FleetViewModel(
                         )
                     }
                     onSuccess()
+                }
+                else -> handleMutationFailure(result)
+            }
+        }
+    }
+
+    fun returnVehicle(
+        vehicle: Vehicle,
+        returnDate: String,
+        reason: String,
+        remarks: String?,
+        onSuccess: () -> Unit,
+    ) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSubmitting = true) }
+            when (val result = repository.returnVehicle(vehicle.id, returnDate, reason, remarks)) {
+                is RepoResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            vehicles = state.vehicles.map { if (it.id == vehicle.id) result.data else it },
+                            isSubmitting = false,
+                            snackbarMessage = "${vehicle.displayName} marked as returned",
+                        )
+                    }
+                    onSuccess()
+                }
+                else -> handleMutationFailure(result)
+            }
+        }
+    }
+
+    fun reactivateVehicle(vehicle: Vehicle) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSubmitting = true) }
+            when (val result = repository.reactivateVehicle(vehicle.id)) {
+                is RepoResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            vehicles = state.vehicles.map { if (it.id == vehicle.id) result.data else it },
+                            isSubmitting = false,
+                            snackbarMessage = "${vehicle.displayName} reactivated",
+                        )
+                    }
                 }
                 else -> handleMutationFailure(result)
             }
