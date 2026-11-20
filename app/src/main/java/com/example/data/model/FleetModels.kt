@@ -75,6 +75,10 @@ data class VehicleDto(
     @Json(name = "maintenance_note") val maintenanceNote: String? = null,
     @Json(name = "image_url") val imageUrl: String? = null,
     @Json(name = "updated_at") val updatedAt: String? = null,
+    @Json(name = "fleet_status") val fleetStatus: String = "ACTIVE",
+    @Json(name = "fleet_return_date") val fleetReturnDate: String? = null,
+    @Json(name = "fleet_return_reason") val fleetReturnReason: String? = null,
+    @Json(name = "fleet_return_remarks") val fleetReturnRemarks: String? = null,
 ) {
     fun toDomain(): Vehicle = Vehicle(
         id = id,
@@ -94,6 +98,10 @@ data class VehicleDto(
         maintenanceNote = maintenanceNote?.takeIf { it.isNotBlank() },
         imageUrl = imageUrl?.takeIf { it.isNotBlank() },
         updatedAt = updatedAt,
+        fleetStatus = fleetStatus,
+        fleetReturnDate = fleetReturnDate,
+        fleetReturnReason = fleetReturnReason,
+        fleetReturnRemarks = fleetReturnRemarks,
     )
 }
 
@@ -115,7 +123,12 @@ data class Vehicle(
     val maintenanceNote: String? = null,
     val imageUrl: String? = null,
     val updatedAt: String? = null,
+    val fleetStatus: String = "ACTIVE",
+    val fleetReturnDate: String? = null,
+    val fleetReturnReason: String? = null,
+    val fleetReturnRemarks: String? = null,
 ) {
+    val isReturned: Boolean get() = fleetStatus.equals("RETURNED", ignoreCase = true)
     val displayName: String get() = "$make $model"
 }
 
@@ -136,6 +149,18 @@ data class CreateVehicleRequest(
     @Json(name = "return_due") val returnDue: String? = null,
     @Json(name = "maintenance_note") val maintenanceNote: String? = null,
     @Json(name = "image_url") val imageUrl: String? = null,
+)
+
+@JsonClass(generateAdapter = true)
+data class UpdateVehicleLifecycleRequest(
+    @Json(name = "fleet_status") val fleetStatus: String,
+    @Json(name = "fleet_return_date") val fleetReturnDate: String? = null,
+    @Json(name = "fleet_return_reason") val fleetReturnReason: String? = null,
+    @Json(name = "fleet_return_remarks") val fleetReturnRemarks: String? = null,
+    @Json(name = "status") val status: String? = null,
+    @Json(name = "current_renter") val currentRenter: String? = null,
+    @Json(name = "return_due") val returnDue: String? = null,
+    @Json(name = "updated_at") val updatedAt: String,
 )
 
 @JsonClass(generateAdapter = true)

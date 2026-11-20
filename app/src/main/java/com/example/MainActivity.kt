@@ -300,6 +300,15 @@ fun IdleFleetApp(
                                 uiState = uiState,
                                 onSelectStatusFilter = viewModel::setStatusFilter,
                                 onSearchQueryChange = viewModel::setSearchQuery,
+                                onReturnVehicle = { vehicle, date, reason, remarks ->
+                                    viewModel.returnVehicle(
+                                        vehicle = vehicle,
+                                        returnDate = date,
+                                        reason = reason,
+                                        remarks = remarks,
+                                    ) {}
+                                },
+                                onReactivateVehicle = viewModel::reactivateVehicle,
                                 onQuickStatusChange = { vehicle, newStatus, note ->
                                     viewModel.quickUpdateVehicleStatus(
                                         vehicle = vehicle,

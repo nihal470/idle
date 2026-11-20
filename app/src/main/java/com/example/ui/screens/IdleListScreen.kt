@@ -89,6 +89,8 @@ fun IdleListScreen(
     onSelectStatusFilter: (VehicleStatus?) -> Unit,
     onSearchQueryChange: (String) -> Unit,
     onQuickStatusChange: (Vehicle, VehicleStatus, String?) -> Unit,
+    onReturnVehicle: (Vehicle, String, String, String?) -> Unit,
+    onReactivateVehicle: (Vehicle) -> Unit,
     onEditVehicle: (Vehicle) -> Unit,
     onAddVehicleClick: () -> Unit,
     onSeedFleetClick: () -> Unit,
@@ -98,8 +100,13 @@ fun IdleListScreen(
     modifier: Modifier = Modifier,
 ) {
     var maintenancePromptVehicle by remember { mutableStateOf<Vehicle?>(null) }
+    var returnPromptVehicle by remember { mutableStateOf<Vehicle?>(null) }
+    var showReturnedVehicles by remember { mutableStateOf(false) }
+    var returnDate by remember { mutableStateOf(java.text.SimpleDateFormat("yyyy-MM-dd", Locale.US).format(java.util.Date())) }
+    var returnReason by remember { mutableStateOf("Lease expired") }
+    var returnRemarks by remember { mutableStateOf("") }
 
-    val vehicles = uiState.filteredFleetVehicles
+    val vehicles = if (showReturnedVehicles) uiState.returnedVehicles else uiState.filteredFleetVehicles
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -115,9 +122,29 @@ fun IdleListScreen(
             )
         }
 
-        item(key = "kpi_strip") {
+        item(key = "fleet_lifecycle_filter") {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FilterChip(
+                    selected = !showReturnedVehicles,
+                    onClick = { showReturnedVehicles = false },
+                    label = { Text("Active fleet (${uiState.activeFleetVehicles.size})") },
+                    modifier = Modifier.testTag("filter_active_fleet"),
+                )
+                FilterChip(
+                    selected = showReturnedVehicles,
+                    onClick = { showReturnedVehicles = true },
+                    label = { Text("Returned (${uiState.returnedVehicles.size})") },
+                    modifier = Modifier.testTag("filter_returned_fleet"),
+                )
+            }
+        }
+
+        if (!showReturnedVehicles) item(key = "kpi_strip") {
             FleetKpiStrip(
-                totalCount = uiState.vehicles.size,
+                totalCount = uiState.activeFleetVehicles.size,
                 availableCount = uiState.availableCount,
                 onRentCount = uiState.onRentCount,
                 maintenanceCount = uiState.maintenanceCount,
@@ -126,7 +153,7 @@ fun IdleListScreen(
             )
         }
 
-        item(key = "search_field") {
+        if (!showReturnedVehicles) item(key = "search_field") {
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = onSearchQueryChange,
@@ -212,10 +239,17 @@ fun IdleListScreen(
             }
         } else {
             items(items = vehicles, key = { it.id }) { vehicle ->
-                FleetVehicleCard(
+                if (showReturnedVehicles) {
+                    ReturnedVehicleCard(
+                        vehicle = vehicle,
+                        isSubmitting = uiState.isSubmitting,
+                        onReactivate = { onReactivateVehicle(vehicle) },
+                    )
+                } else FleetVehicleCard(
                     vehicle = vehicle,
                     isSubmitting = uiState.isSubmitting,
                     onCardClick = { onEditVehicle(vehicle) },
+                    onReturnVehicle = { returnPromptVehicle = vehicle },
                     onSelectStatus = { targetStatus ->
                         if (targetStatus == VehicleStatus.MAINTENANCE && vehicle.status != VehicleStatus.MAINTENANCE) {
                             maintenancePromptVehicle = vehicle
@@ -230,6 +264,63 @@ fun IdleListScreen(
         item(key = "bottom_spacer") {
             Spacer(modifier = Modifier.height(76.dp))
         }
+    }
+
+    returnPromptVehicle?.let { vehicle ->
+        AlertDialog(
+            onDismissRequest = { if (!uiState.isSubmitting) returnPromptVehicle = null },
+            title = { Text("Return leased vehicle?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("${vehicle.year} ${vehicle.displayName} · ${vehicle.licensePlate}")
+                    OutlinedTextField(
+                        value = returnDate,
+                        onValueChange = { returnDate = it },
+                        label = { Text("Return date (YYYY-MM-DD)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("return_vehicle_date"),
+                    )
+                    Text("Reason", style = MaterialTheme.typography.labelLarge)
+                    listOf("Lease expired", "Owner requested", "Other").forEach { reason ->
+                        FilterChip(
+                            selected = returnReason == reason,
+                            onClick = { returnReason = reason },
+                            label = { Text(reason) },
+                        )
+                    }
+                    OutlinedTextField(
+                        value = returnRemarks,
+                        onValueChange = { returnRemarks = it },
+                        label = { Text("Remarks (optional)") },
+                        minLines = 2,
+                        modifier = Modifier.fillMaxWidth().testTag("return_vehicle_remarks"),
+                    )
+                    Text(
+                        "This removes the vehicle from the active fleet but keeps its record and booking history.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = !uiState.isSubmitting && returnDate.matches(Regex("\\d{4}-\\d{2}-\\d{2}")),
+                    onClick = {
+                        onReturnVehicle(vehicle, returnDate, returnReason, returnRemarks)
+                        returnPromptVehicle = null
+                        returnDate = java.text.SimpleDateFormat("yyyy-MM-dd", Locale.US).format(java.util.Date())
+                        returnReason = "Lease expired"
+                        returnRemarks = ""
+                    },
+                    modifier = Modifier.testTag("confirm_return_vehicle"),
+                ) { Text(if (uiState.isSubmitting) "Saving…" else "Confirm return") }
+            },
+            dismissButton = {
+                TextButton(onClick = { returnPromptVehicle = null }, enabled = !uiState.isSubmitting) {
+                    Text("Cancel")
+                }
+            },
+        )
     }
 
     maintenancePromptVehicle?.let { vehicle ->
@@ -345,6 +436,7 @@ private fun FleetVehicleCard(
     vehicle: Vehicle,
     isSubmitting: Boolean,
     onCardClick: () -> Unit,
+    onReturnVehicle: () -> Unit,
     onSelectStatus: (VehicleStatus) -> Unit,
 ) {
     val statusColors = IdleFleetTheme.statusColors
@@ -476,6 +568,16 @@ private fun FleetVehicleCard(
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            OutlinedButton(
+                onClick = onReturnVehicle,
+                enabled = !isSubmitting && vehicle.status != VehicleStatus.ON_RENT,
+                modifier = Modifier.fillMaxWidth().testTag("return_vehicle_${vehicle.licensePlate}"),
+            ) {
+                Icon(Icons.Rounded.Close, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Return leased vehicle")
+            }
 
             // One-tap status switcher row
             Row(
@@ -906,6 +1008,61 @@ fun AddEditVehicleSheet(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(text = stringResource(R.string.action_delete_vehicle))
                 }
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun ReturnedVehicleCard(
+    vehicle: Vehicle,
+    isSubmitting: Boolean,
+    onReactivate: () -> Unit,
+) {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.fillMaxWidth().testTag("returned_vehicle_${vehicle.licensePlate}"),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                LicensePlateBadge(plate = vehicle.licensePlate)
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = RoundedCornerShape(50),
+                ) {
+                    Text(
+                        "RETURNED",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+            Text("${vehicle.year} ${vehicle.displayName}", style = MaterialTheme.typography.titleMedium)
+            Text("Return date: ${vehicle.fleetReturnDate ?: "—"}", style = MaterialTheme.typography.bodySmall)
+            Text("Reason: ${vehicle.fleetReturnReason ?: "—"}", style = MaterialTheme.typography.bodySmall)
+            if (!vehicle.fleetReturnRemarks.isNullOrBlank()) {
+                Text("Remarks: ${vehicle.fleetReturnRemarks}", style = MaterialTheme.typography.bodySmall)
+            }
+            OutlinedButton(
+                onClick = onReactivate,
+                enabled = !isSubmitting,
+                modifier = Modifier.fillMaxWidth().testTag("reactivate_vehicle_${vehicle.licensePlate}"),
+            ) {
+                Icon(Icons.Rounded.CheckCircle, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Reactivate vehicle")
             }
         }
     }

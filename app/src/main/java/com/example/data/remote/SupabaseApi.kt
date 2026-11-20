@@ -5,6 +5,7 @@ import com.example.data.model.CreateBookingRequest
 import com.example.data.model.CreateVehicleRequest
 import com.example.data.model.UpdateBookingStatusRequest
 import com.example.data.model.UpdateVehicleStatusRequest
+import com.example.data.model.UpdateVehicleLifecycleRequest
 import com.example.data.model.VehicleDto
 import retrofit2.Response
 import retrofit2.http.Body
@@ -47,6 +48,13 @@ interface SupabaseApi {
     suspend fun updateVehicleStatus(
         @Query("id") idFilter: String,
         @Body request: UpdateVehicleStatusRequest,
+    ): Response<List<VehicleDto>>
+
+    @Headers("Prefer: return=representation")
+    @PATCH("rest/v1/vehicles")
+    suspend fun updateVehicleLifecycle(
+        @Query("id") idFilter: String,
+        @Body request: UpdateVehicleLifecycleRequest,
     ): Response<List<VehicleDto>>
 
     @DELETE("rest/v1/vehicles")
