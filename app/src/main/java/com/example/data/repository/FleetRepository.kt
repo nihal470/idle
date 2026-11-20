@@ -128,7 +128,7 @@ class FleetRepository(
                 fleetStatus = "RETURNED",
                 fleetReturnDate = returnDate,
                 fleetReturnReason = reason,
-                fleetReturnRemarks = remarks?.trim()?.takeIf { it.isNotBlank() },
+                fleetReturnRemarks = remarks?.trim()?.takeIf { it.isNotBlank() } ?: "",
                 status = VehicleStatus.AVAILABLE.wireValue,
                 currentRenter = "",
                 returnDue = "",
