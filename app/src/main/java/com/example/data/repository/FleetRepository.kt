@@ -130,8 +130,8 @@ class FleetRepository(
                 fleetReturnReason = reason,
                 fleetReturnRemarks = remarks?.trim()?.takeIf { it.isNotBlank() },
                 status = VehicleStatus.AVAILABLE.wireValue,
-                currentRenter = null,
-                returnDue = null,
+                currentRenter = "",
+                returnDue = "",
                 updatedAt = isoNowUtc(),
             )
             val response = api.updateVehicleLifecycle(idFilter = "eq.$id", request = payload)
