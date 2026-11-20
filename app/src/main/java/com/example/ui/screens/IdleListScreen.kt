@@ -571,7 +571,7 @@ private fun FleetVehicleCard(
 
             OutlinedButton(
                 onClick = onReturnVehicle,
-                enabled = !isSubmitting,
+                enabled = !isSubmitting && vehicle.status != VehicleStatus.ON_RENT,
                 modifier = Modifier.fillMaxWidth().testTag("return_vehicle_${vehicle.licensePlate}"),
             ) {
                 Icon(Icons.Rounded.Close, contentDescription = null)
