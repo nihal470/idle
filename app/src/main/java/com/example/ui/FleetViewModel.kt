@@ -313,9 +313,16 @@ class FleetViewModel(
         remarks: String?,
         onSuccess: () -> Unit,
     ) {
+        val hasActiveBooking = _uiState.value.bookings.any {
+            it.vehicleId == vehicle.id && it.status == BookingStatus.ACTIVE
+        }
+        if (vehicle.status == VehicleStatus.ON_RENT || hasActiveBooking) {
+            _uiState.update { it.copy(snackbarMessage = "Complete the active customer rental before returning this vehicle to its owner.") }
+            return
+        }
         viewModelScope.launch {
             _uiState.update { it.copy(isSubmitting = true) }
-            when (val result = repository.returnVehicle(vehicle.id, returnDate, reason, remarks)) {
+            when (val result = repository.returnVehicle(vehicle.id, returnDate, reason, remarks))
                 is RepoResult.Success -> {
                     _uiState.update { state ->
                         state.copy(
