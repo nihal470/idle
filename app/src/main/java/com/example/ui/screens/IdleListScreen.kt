@@ -144,7 +144,7 @@ fun IdleListScreen(
 
         if (!showReturnedVehicles) item(key = "kpi_strip") {
             FleetKpiStrip(
-                totalCount = uiState.vehicles.size,
+                totalCount = uiState.activeFleetVehicles.size,
                 availableCount = uiState.availableCount,
                 onRentCount = uiState.onRentCount,
                 maintenanceCount = uiState.maintenanceCount,
